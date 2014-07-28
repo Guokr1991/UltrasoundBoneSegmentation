@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Examples</category>
+  <title>BoneSegmentationEvaluator</title>
+  <description><![CDATA[This is a CLI module that can be bundled in an extension]]></description>
+  <version>0.0.1</version>
+  <documentation-url>http://www.example.com/Slicer/Modules/BoneSegmentationEvaluator</documentation-url>
+  <license>Slicer</license>
+  <contributor>Matt Lougheed (Queen's University)</contributor>
+  <acknowledgements></acknowledgements>
+  <parameters>
+    <label>IO</label>
+    <description><![CDATA[Input/output parameters]]></description>
+    <image>
+      <name>truePositiveGroundTruthVolume</name>
+      <label>True positive ground truth volume</label>
+      <channel>input</channel>
+      <index>0</index>
+      <description><![CDATA[True positive ground truth volume]]></description>
+    </image>
+	<image>
+      <name>falseNegativeGroundTruthVolume</name>
+      <label>False negative ground truth volume</label>
+      <channel>input</channel>
+      <index>1</index>
+      <description><![CDATA[False negative ground truth volume]]></description>
+    </image>
+	<double>
+	  <name>dilateValue</name>
+	  <label>Dilation value</label>
+	  <channel>input</channel>
+	  <index>2</index>
+	  <description><![CDATA[Dilation value for false negative volume]]></description>
+	</double>
+    <image>
+      <name>segmentedVolume</name>
+      <label>Segmented volume</label>
+      <channel>input</channel>
+      <index>3</index>
+      <description><![CDATA[Segmented volume]]></description>
+    </image>
+	<double>
+	  <name>falseNegativePercentage</name>
+	  <label>False negative percentage</label>
+	  <description><![CDATA[False negative percentage output]]></description>
+	  <channel>output</channel>
+	</double>
+	<double>
+	  <name>truePositivePercentage</name>
+	  <label>True positive percentage</label>
+	  <description><![CDATA[True positive percentage output]]></description>
+	  <channel>output</channel>
+	</double>
+  </parameters>
+</executable>
