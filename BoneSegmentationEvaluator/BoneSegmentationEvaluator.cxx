@@ -54,7 +54,7 @@ int DoIt( int argc, char * argv[], T )
   IteratorType iterator4(falseNegativeImage, falseNegativeImage->GetRequestedRegion());
 
   // *** ITK for segmented meta image dilation ***
-  reader3->SetFileName(falseNegativeGroundTruthVolume.c_str());
+  reader3->SetFileName(segmentedVolume.c_str());
   reader3->Update();
 
   // Use cross structure for dilation
@@ -137,6 +137,12 @@ int DoIt( int argc, char * argv[], T )
   falseNegativePercentage = (float)falseNegative/(float)expectedPoints * 100;
   truePositivePercentage = truePositive/(float)segCount * 100;
 
+  std::ofstream rts;
+  rts.open(returnParameterFile.c_str());
+  rts << "falseNegativePercentage = " << falseNegativePercentage << std::endl;
+  rts << "truePositivePercentage = " << truePositivePercentage << std::endl;
+  rts.close();
+
   return EXIT_SUCCESS;
 }
 
@@ -201,11 +207,7 @@ int main( int argc, char * argv[] )
     return EXIT_FAILURE;
     }
 
-  std::ofstream rts;
-  rts.open(returnParameterFile.c_str());
-  rts << "truePositivePercentage = " << truePositivePercentage << std::endl;
-  rts << "falseNegativePercentage = " << falseNegativePercentage << std::endl;
-  rts.close();
+
 
   return EXIT_SUCCESS;
 }
