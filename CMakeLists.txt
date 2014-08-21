@@ -19,6 +19,8 @@ include(${Slicer_USE_FILE})
 #-----------------------------------------------------------------------------
 # Extension modules
 add_subdirectory(BoneSegmentationEvaluator)
+add_subdirectory(UltrasoundBoneSegmenter)
+add_subdirectory(UltrasoundBoneSegmenter_CLI)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------
