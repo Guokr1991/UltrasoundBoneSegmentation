@@ -27,9 +27,15 @@
 #include <vtkObjectFactory.h>
 #include <vtkSmartPointer.h>
 #include <vtkImageGaussianSmooth.h>
-
+#include <vtkImageLaplacian.h>
+#include <vtkImageExport.h>
 #include <vtkMRMLSequenceNode.h>
 #include <vtkMRMLScalarVolumeNode.h>
+#include <vtkImageData.h>
+
+// ITK includes
+#include <itkLaplacianRecursiveGaussianImageFilter.h>
+#include <itkImage.h>
 
 // STD includes
 #include <cassert>
@@ -56,6 +62,8 @@ void vtkSlicerUltrasoundBoneSegmenterLogic::PrintSelf(ostream& os, vtkIndent ind
 //----------------------------------------------------------------------------
 int vtkSlicerUltrasoundBoneSegmenterLogic::Apply(vtkMRMLUltrasoundBoneSegmenterNode* paramNode, QProgressBar* progressBar)
 {
+  typedef itk::Image<unsigned char, 2> ImageType;
+  typedef itk::LaplacianRecursiveGaussianImageFilter<ImageType, ImageType> filterType;
   vtkMRMLScene* scene = this->GetMRMLScene();
   if (!scene)
   {
@@ -68,17 +76,72 @@ int vtkSlicerUltrasoundBoneSegmenterLogic::Apply(vtkMRMLUltrasoundBoneSegmenterN
   int currentProgress = 0;
   progressBar->reset();
   progressBar->setTextVisible(true);
+
   for (int i = 0; i < numberOfFrames; i++)
   {
+
     vtkMRMLScalarVolumeNode* currentFrame = vtkMRMLScalarVolumeNode::SafeDownCast(sequenceNode->GetNthDataNode(i));
+    vtkImageData* inputVolume = currentFrame->GetImageData();
+    vtkSmartPointer<vtkImageExport> imageExport = vtkSmartPointer<vtkImageExport>::New();
+    # if (VTK_MAJOR_VERSION <= 5)
+      imageExport->SetInput(inputVolume);
+    #else
+      imageExport->SetInputData(inputVolume);
+    #endif
+    imageExport->Update();
+
+    int inputExtent[6] = {0,0,0,0,0,0};
+    inputVolume->GetExtent(inputExtent);
+    ImageType::SizeType inputSize;
+    inputSize[0] = inputExtent[1] - inputExtent[0] + 1;
+    inputSize[1] = inputExtent[3] - inputExtent[2] + 1;
+    //inputSize[2] = inputExtent[5] - inputExtent[4] + 1;
+
+    ImageType::IndexType start;
+    //start[0] = start[1] = start[2] = 0.0;
+    start[0] = start[1] = 0.0;
+
+    ImageType::RegionType region;
+    region.SetSize(inputSize);
+    region.SetIndex(start);
+
+    ImageType::Pointer inputItkImage = ImageType::New();
+    inputItkImage->SetRegions(region);
+    try
+    {
+      inputItkImage->Allocate();
+    }
+    catch(itk::ExceptionObject &err)
+    {
+      std::cerr << "Error allocating memory for ITK image!" << std::endl;
+    }
+    imageExport->Export(inputItkImage->GetBufferPointer());
+    filterType::Pointer laplacianFilter = filterType::New();
+    laplacianFilter->SetInput(inputItkImage);
+    laplacianFilter->Update();
+
+    unsigned char* vtkImageDataPtr = (unsigned char*)inputVolume->GetScalarPointer();
+    itk::ImageRegionIteratorWithIndex<ImageType> imageIterator(laplacianFilter->GetOutput(),region);
+    for (imageIterator.GoToBegin(); !imageIterator.IsAtEnd(); ++imageIterator)
+    {
+      ImageType::IndexType i = imageIterator.GetIndex();
+      (*vtkImageDataPtr) = laplacianFilter->GetOutput()->GetPixel(i);
+      vtkImageDataPtr++;
+    }
+    /*
     vtkSmartPointer<vtkImageGaussianSmooth> gaussianSmoothFilter = vtkSmartPointer<vtkImageGaussianSmooth>::New();
     gaussianSmoothFilter->SetInputConnection(currentFrame->GetImageDataConnection());
     gaussianSmoothFilter->Update();
-    currentFrame->SetAndObserveImageData(gaussianSmoothFilter->GetOutput());
-	currentProgress = (i+1.0)/numberOfFrames*100;
-	progressBar->setValue(currentProgress);
+    vtkSmartPointer<vtkImageLaplacian> laplacianFilter = vtkSmartPointer<vtkImageLaplacian>::New();
+    laplacianFilter->SetInputConnection(gaussianSmoothFilter->GetOutputPort());
+    laplacianFilter->Update();
+    */
+    //currentFrame->SetAndObserveImageData(laplacianFilter->GetOutput());
+    currentFrame->SetAndObserveImageData(inputVolume);
+    currentProgress = (i+1.0)/numberOfFrames*100;
+    progressBar->setValue(currentProgress);
   }
-  
+
   return 0;
 }
 
