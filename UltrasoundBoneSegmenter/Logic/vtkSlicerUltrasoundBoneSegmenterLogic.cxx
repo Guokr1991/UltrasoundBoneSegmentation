@@ -35,6 +35,10 @@
 
 // ITK includes
 #include <itkLaplacianRecursiveGaussianImageFilter.h>
+#include <itkGradientRecursiveGaussianImageFilter.h>
+#include <itkRecursiveGaussianImageFilter.h>
+#include <itkDiscreteGaussianImageFilter.h>
+#include <itkThresholdImageFilter.h>
 #include <itkImage.h>
 
 // STD includes
@@ -64,6 +68,11 @@ int vtkSlicerUltrasoundBoneSegmenterLogic::Apply(vtkMRMLUltrasoundBoneSegmenterN
 {
   typedef itk::Image<unsigned char, 2> ImageType;
   typedef itk::LaplacianRecursiveGaussianImageFilter<ImageType, ImageType> filterType;
+  //typedef itk::GradientRecursiveGaussianImageFilter<ImageType, ImageType> filterType;
+  //typedef itk::RecursiveGaussianImageFilter<ImageType, ImageType> filterType;
+  typedef itk::DiscreteGaussianImageFilter<ImageType, ImageType> gaussianFilterType;
+  typedef itk::ThresholdImageFilter<ImageType> thresholdFilterType;
+
   vtkMRMLScene* scene = this->GetMRMLScene();
   if (!scene)
   {
@@ -116,8 +125,32 @@ int vtkSlicerUltrasoundBoneSegmenterLogic::Apply(vtkMRMLUltrasoundBoneSegmenterN
       std::cerr << "Error allocating memory for ITK image!" << std::endl;
     }
     imageExport->Export(inputItkImage->GetBufferPointer());
+
+    /*
+    filterType::Pointer gradientFilter = filterType::New();
+    gradientFilter->SetInput(inputItkImage);
+    gradientFilter->SetSigma(100);
+    gradientFilter->Update();
+    */
+    /*
+    filterType::Pointer gaussianFilter = filterType::New();
+    gaussianFilter->SetInput(inputItkImage);
+    gaussianFilter->SetDirection(1); // y-axis
+    gaussianFilter->SetSecondOrder();
+    gaussianFilter->Update();
+    */
+    thresholdFilterType::Pointer thresholdFilter = thresholdFilterType::New();
+    thresholdFilter->SetInput(inputItkImage);
+    thresholdFilter->ThresholdBelow(180);
+    thresholdFilter->SetOutsideValue(0);
+    thresholdFilter->Update();
+    gaussianFilterType::Pointer gaussianFilter = gaussianFilterType::New();
+    gaussianFilter->SetInput(thresholdFilter->GetOutput());
+    gaussianFilter->SetVariance(4.0);
+    gaussianFilter->Update();
+
     filterType::Pointer laplacianFilter = filterType::New();
-    laplacianFilter->SetInput(inputItkImage);
+    laplacianFilter->SetInput(gaussianFilter->GetOutput());
     laplacianFilter->Update();
 
     unsigned char* vtkImageDataPtr = (unsigned char*)inputVolume->GetScalarPointer();
