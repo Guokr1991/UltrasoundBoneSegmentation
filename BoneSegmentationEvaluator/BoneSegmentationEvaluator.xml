@@ -2,7 +2,7 @@
 <executable>
   <category>Examples</category>
   <title>BoneSegmentationEvaluator</title>
-  <description><![CDATA[This is a CLI module that can be bundled in an extension]]></description>
+  <description><![CDATA[This is a CLI module to evaluate the performance of a segmentation algorithm based on true positive and false negative metrics]]></description>
   <version>0.0.1</version>
   <documentation-url>http://www.example.com/Slicer/Modules/BoneSegmentationEvaluator</documentation-url>
   <license>Slicer</license>
@@ -54,5 +54,17 @@
 	  <description><![CDATA[True positive percentage output]]></description>
 	  <channel>output</channel>
 	</float>
+	<float>
+	  <name>bestTruePositiveFrameNumber</name>
+	  <label>Best true positive frame number</label>
+	  <description><![CDATA[The frame number which had the best performance for the true positive metric]]></description>
+	  <channel>output</channel>
+	</float>
+	<float>
+	  <name>worstFalseNegativeFrameNumber</name>
+	  <label>Worst false negative frame number</label>
+	  <description><![CDATA[The frame number which had the worst performance for the false negative metric]]></description>
+	  <channel>output</channel>
+	  </float>
   </parameters>
 </executable>
